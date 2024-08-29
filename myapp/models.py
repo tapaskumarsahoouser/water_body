@@ -23,9 +23,9 @@ class User(models.Model):
     password = models.CharField(max_length=50, blank=True, null=True)
     adhaar=models.CharField(max_length=16, blank=True, null=True)
     reset_token = models.CharField(max_length=100, blank=True, null=True)
-    avtar = models.ImageField(upload_to='avtar/',default='avtar/avtar.png')
+    avtar = models.ImageField(upload_to='avtar/', blank=True, null=True)
     user_category = models.CharField(max_length=20, blank=True, null=True)
-    admin = models.ForeignKey(Admin, on_delete=models.CASCADE)
+    # admin = models.ForeignKey(Admin, on_delete=models.CASCADE)
     def __str__(self):
         return str(self.Name)
     
