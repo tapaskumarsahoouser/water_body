@@ -17,3 +17,17 @@ class User(admin.ModelAdmin):
 class Pond(admin.GISModelAdmin):
     list_display = ['id','name','latlong','location','area','city','telegram_group_id','registration']
 
+@admin.register(Worker_details)
+class Worker_details(admin.GISModelAdmin):
+    list_display = ['mobno','name','user']
+
+
+@admin.register(Task_Category)
+class Task_Category(admin.GISModelAdmin):
+    list_display = ['name']
+
+
+@admin.register(Task)
+class Task(admin.GISModelAdmin):
+    list_display = ['name','option1','option2','feed_weight','date','from_time','to_time','pond_id','worker_name']
+
