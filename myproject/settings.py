@@ -84,7 +84,7 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'waterdb',
+        'NAME': 'waterdb1',
         'USER': 'Bariflolabs',
         'PASSWORD': 'Bfl@2024',
         'HOST': 'aqua-postgres.postgres.database.azure.com',
@@ -117,13 +117,17 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kolkata'
 
 USE_I18N = True
 
 USE_L10N = True
 
 USE_TZ = True
+
+
+
+
 
 
 # Static files (CSS, JavaScript, Images)

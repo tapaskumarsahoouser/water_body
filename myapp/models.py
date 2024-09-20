@@ -74,3 +74,35 @@ class Task(models.Model):
    def __str__(self):
          name=f"{self.name}"
          return name
+
+
+class ServicePayment(models.Model):
+    user_name = models.CharField(max_length=100,verbose_name='User Name')
+    pond_id = models.ForeignKey(Pond,on_delete=models.CASCADE)
+    service_name = models.CharField(max_length=50,verbose_name='Service Name',null=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    order_id = models.CharField(max_length=100, blank=True,null=True,verbose_name='Order Id')
+    token = models.CharField(max_length=200,blank=True,null=True,verbose_name='Token')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return str(self.user_name)
+    
+    
+class Parameter(models.Model):
+    pH = models.FloatField()
+    dissolved_oxygen = models.FloatField()
+    NDVI = models.FloatField()
+    NDTI = models.FloatField()
+    GCI = models.FloatField()                           
+    NDCI = models.FloatField()
+    NDWI = models.FloatField()
+    TSS = models.FloatField()
+    CDOM = models.FloatField()
+    AQUATIC_MACROPYTES = models.FloatField()
+    Phycocyanin = models.FloatField()
+    pond = models.ForeignKey(Pond, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return str(self.pond)

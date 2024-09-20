@@ -30,4 +30,9 @@ class Task_Category(admin.GISModelAdmin):
 @admin.register(Task)
 class Task(admin.GISModelAdmin):
     list_display = ['name','option1','option2','feed_weight','date','from_time','to_time','pond_id','worker_name']
+    
+    
+@admin.register(ServicePayment)
+class ServicePayment(admin.ModelAdmin):
+    list_display = ('user_name', 'pond_id', 'service_name', 'amount', 'order_id', 'token', 'created_at')
 

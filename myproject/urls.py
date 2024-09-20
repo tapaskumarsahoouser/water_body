@@ -16,5 +16,12 @@ urlpatterns = [
     path('work_assign/',views.work_assign),
     path('category/',views.category),
     path('workerview/<mob>/',views.workerview),
+    path('userpondsid/<id>/',views.userpondsid),
+    path('graph/<id>/',views.graph),
+    path('demo/',views.demo),
+    path('deleteuser/<mob>/',views.deleteuser),
+    
+    
+    
 
 ]

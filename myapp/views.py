@@ -210,7 +210,7 @@ def adminpond_view(request, Mob):
     if request.method == 'GET':
         try:
             admin = Admin.objects.get(Mob=Mob)
-            user = User.objects.filter(admin=admin)
+            user = User.objects.all()
             pond = Pond.objects.filter(registration__in=user)  
 
             data = []
@@ -332,3 +332,172 @@ def workerview(request,mob):
                return JsonResponse({'Employee':response}, safe=False)
        except:
            return JsonResponse({'category':'error'})
+
+
+@csrf_exempt
+def userpondsid(request, id):
+    if request.method == 'GET':
+        try:
+            pond = Pond.objects.get(id=id)
+            instance = ServicePayment.objects.filter(pond_id=pond)
+
+            response_data = {
+            'id': pond.id,
+            'name': pond.name,
+            'city':pond.city,
+            'location': pond.location.coords,
+            'area':pond.area,
+            'payments': []
+        }
+            for i in instance:
+                payment_info = {    
+                    i.service_name: i.token
+                }
+                response_data['payments'].append(payment_info)
+
+            return JsonResponse(response_data)
+            
+        except ObjectDoesNotExist:
+            return JsonResponse({'message': 'Pond location not found'}, status=404)
+    else:
+        return JsonResponse({'message': 'Method not allowed'}, status=405)
+    
+    
+
+@csrf_exempt
+def graph(request, id):
+    if request.method == 'POST':
+        try:
+            jsondata = JSONParser().parse(request)
+            month = jsondata.get('month')
+
+            # Debugging statement, should be removed or handled in a proper logging mechanism in production
+            print(month)
+
+            if not month:
+                return JsonResponse({'message': 'Month is required'}, status=400)
+
+            # Assuming Parameter model has the fields `pond` and `created_at`
+            temp = Parameter.objects.filter(
+                pond=id,
+                created_at__month=month
+            ).order_by('-created_at')[:5]
+
+            if temp.exists():
+                ph_values = [param.pH for param in temp]
+                # Uncomment and define other values if needed
+                # DO_values = [param.dissolved_oxygen for param in temp]
+                # ndvi_values = [param.NDVI for param in temp]
+                # ndti_values = [param.NDTI for param in temp]
+                # gci_values = [param.GCI for param in temp]
+                # ndci_values = [param.NDCI for param in temp]
+                # ndwi_values = [param.NDWI for param in temp]
+                # TSS_values = [param.TSS for param in temp]
+                # cdom_values = [param.CDOM for param in temp]
+                AQUATIC_MACROPYTES_values = [param.AQUATIC_MACROPYTES for param in temp]
+
+                # Calculate weeks based on `created_at` day of the month
+                weeks = [f"week {(i.created_at.day - 1) // 7 + 1}" for i in temp]
+                weeks.reverse()
+
+                response = {
+                    'ph': ph_values,
+                    # 'dissolved_oxygen': DO_values,
+                    # 'NDVI': ndvi_values,
+                    # 'NDTI': ndti_values,
+                    # 'GCI': gci_values,
+                    # 'NDCI': ndci_values,
+                    # 'NDWI': ndwi_values,
+                    # 'TSS': TSS_values,
+                    # 'CDOM': cdom_values,
+                    'AQUATIC_MACROPYTES': AQUATIC_MACROPYTES_values,
+                    'week': weeks
+                }
+                return JsonResponse(response, safe=False)
+            else:
+                return JsonResponse({'message': 'No data found for the given month and pond'}, status=404)
+
+        except Exception as e:
+            # Catching broad exceptions is generally not recommended, but it ensures something is returned
+            return JsonResponse({'message': 'An error occurred', 'error': str(e)}, status=500)
+        
+    # Handle methods other than POST
+    return JsonResponse({'message': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+def demo(request):
+    if request.method == 'POST':
+        try:
+            # Parse JSON data from the request
+            jsondata = JSONParser().parse(request)
+            name = jsondata.get('name')
+            latitude = jsondata.get('latitude')
+            longitude = jsondata.get('longitude')
+            polygon_points = jsondata.get('location', None)
+            pond_id = jsondata.get('pond_id')  # This is the ID to match
+            area = jsondata.get('area')
+            city = jsondata.get('city')
+            # telegram_group_id = jsondata.get('telegram_group_id')  # Uncomment if needed
+
+            if not pond_id:
+                return JsonResponse({'message': 'Pond ID is required'}, status=400)
+
+            # Fetch the Pond instance using the pond_id
+            try:
+                pond_instance = Pond.objects.get(id=pond_id)
+            except Pond.DoesNotExist:
+                return JsonResponse({'message': 'Pond not found for the given ID'}, status=404)
+
+            # Update the Pond instance
+            pond_instance.name = name
+            pond_instance.city = city
+            pond_instance.area = area
+
+            # Handle polygon points
+            if polygon_points:
+                points_str = ', '.join([f'{point[0]} {point[1]}' for point in polygon_points])
+                points_str += f', {polygon_points[0][0]} {polygon_points[0][1]}'  # Closing the polygon
+                pond_instance.location = f'POLYGON(({points_str}))'
+            else:
+                pond_instance.location = None
+
+            # Set latitude and longitude
+            latitude_str = str(latitude)
+            longitude_str = str(longitude)
+            pond_instance.latlong = f'({latitude_str},{longitude_str})'
+
+            # Save the updated Pond instance
+            pond_instance.save()
+
+            return JsonResponse({'message': 'Location updated successfully.'})
+
+        except ValueError as ve:
+            return JsonResponse({'message': 'Invalid data format', 'error': str(ve)}, status=400)
+
+        except Exception as e:
+            return JsonResponse({'message': 'Location not updated', 'error': str(e)}, status=500)
+
+    return JsonResponse({'message': 'Method not allowed'}, status=405)
+
+
+
+@csrf_exempt
+def deleteuser(request,mob):
+    if request.method == 'DELETE':    
+        # if not admin_mob:
+        #     return JsonResponse({"error": "admin mobile number not provided"})
+        # if not Super.objects.filter(Mob=admin_mob):
+        #     return JsonResponse({"error": "admin mobile number not found"})
+            
+        try:
+            print("jhfjhgi")
+            var = User.objects.get(Mob=mob)
+            print(var)
+            var.delete()
+            print("jijh")
+            return JsonResponse({'message':'user delete successfull'})
+        except:
+            return JsonResponse({'message':'user Already deleted'})
+    else:
+        return JsonResponse({'message':'Invalid user'})
