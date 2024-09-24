@@ -10,7 +10,7 @@ urlpatterns = [
     path('login/',views.login),
     path('common_login/',views.common_login),
     path('viewuser/',views.viewuser),
-    path('pondcount/<registration_id>/',views.pondcount),
+    # path('pondcount/<registration_id>/',views.pondcount),
     path('userpond_view/<Mob>/',views.userpond_view),
     path('adminpond_view/<Mob>/',views.adminpond_view),
     path('work_assign/',views.work_assign),
@@ -20,6 +20,8 @@ urlpatterns = [
     path('graph/<id>/',views.graph),
     path('demo/',views.demo),
     path('deleteuser/<mob>/',views.deleteuser),
+    path('photosend/<id>/',views.photosend , name ="photosend"),
+    path('photoupload/<Mob>/',views.photoupload),
     
     
     

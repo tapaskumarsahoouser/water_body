@@ -24,22 +24,32 @@ class User(models.Model):
     adhaar=models.CharField(max_length=16, blank=True, null=True)
     reset_token = models.CharField(max_length=100, blank=True, null=True)
     avtar = models.ImageField(upload_to='avtar/', blank=True, null=True)
-    user_category = models.CharField(max_length=20, blank=True, null=True)
-    # admin = models.ForeignKey(Admin, on_delete=models.CASCADE)
+    USER_TYPES = (
+       ('3d', '3d'),
+       ('analytics', 'analytics'),
+       ('aqua', 'aqua'),
+       ('water', 'water'),
+   )
+    user_category = models.CharField(max_length=20, choices=USER_TYPES,default=USER_TYPES)
     def __str__(self):
-        return str(self.Name)
-    
+        name = f"{self.user_category}"
+        return name
+
     
 class Pond(models.Model):
     name = models.CharField(max_length=50)
     latlong = models.CharField(max_length=50)
-    location = models.GeometryField(unique=True,null=True,blank=True)
-    area = models.CharField(max_length=50, blank=True,null=True)
+    location = models.GeometryField(unique=True, null=True, blank=True)
+    area = models.CharField(max_length=50, blank=True, null=True)
     city = models.CharField(max_length=50)
-    telegram_group_id = models.CharField(max_length=100, null=True,blank=True) 
-    registration = models.ForeignKey(User,on_delete=models.CASCADE)
+    telegram_group_id = models.CharField(max_length=100, null=True, blank=True)
+    registration = models.ForeignKey(User, on_delete=models.CASCADE)
+    
+    
+     
     def __str__(self):
         return str(self.name)
+
     
     
 ########################################################################################

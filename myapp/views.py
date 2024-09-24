@@ -166,19 +166,6 @@ def viewuser(request):
 
 
 
-@csrf_exempt
-def pondcount(request, registration_id):
-    if request.method == 'GET':
-        value = Cluster.objects.get(id=registration_id)
-        result = Pond.objects.filter(registration_id=value) \
-            .values('registration_id') \
-            .annotate(num_ponds=Count('id')) \
-            .values('num_ponds')  
-
-        if result:
-            return JsonResponse({'pond_counts': list(result)})
-        else:
-            return JsonResponse({'message': 'No pond locations found for the given registration ID'}, status=404)
 
 
 
@@ -204,26 +191,31 @@ def userpond_view(request,Mob):
         except:
             return JsonResponse({'message':'error'},status=400)
  
-
 @csrf_exempt
 def adminpond_view(request, Mob):
     if request.method == 'GET':
         try:
             admin = Admin.objects.get(Mob=Mob)
             user = User.objects.all()
-            pond = Pond.objects.filter(registration__in=user)  
+            pond = Pond.objects.filter(registration__in=user)
 
             data = []
             for i in pond:
-                vv = {
+                app = {
                     "id": i.id,
                     "name": i.name,
                     "latlong": i.latlong,
-                    "location": i.location.coords,
                     "Area": i.area,
                     "city": i.city,
                 }
-                data.append(vv)
+
+                # Check if location is not None before accessing coords
+                if i.location:
+                    app["location"] = i.location.coords  # Access coords only if location is not None
+                else:
+                    app["location"] = None  # Set to None or handle as needed
+
+                data.append(app)
             
             return JsonResponse(data, safe=False)
 
@@ -232,8 +224,6 @@ def adminpond_view(request, Mob):
         
         except Exception as e:
             return JsonResponse({'message': 'Error', 'details': str(e)}, status=400)
-        
-        
         
 import redis
 from django.conf import settings
@@ -424,62 +414,39 @@ def graph(request, id):
     # Handle methods other than POST
     return JsonResponse({'message': 'Method not allowed'}, status=405)
 
-
 @csrf_exempt
 def demo(request):
     if request.method == 'POST':
+        jsondata = JSONParser().parse(request)
+        name = jsondata.get('name')
+        latitude = jsondata.get('latitude')
+        longitude = jsondata.get('longitude')
+        polygon_points  = jsondata.get('location', None)
+        area = jsondata.get('area')
+        city = jsondata.get('city')
+        Mob = jsondata.get('Mob')
+        # telegram_group_id = jsondata.get('telegram_group_id')
+
         try:
-            # Parse JSON data from the request
-            jsondata = JSONParser().parse(request)
-            name = jsondata.get('name')
-            latitude = jsondata.get('latitude')
-            longitude = jsondata.get('longitude')
-            polygon_points = jsondata.get('location', None)
-            pond_id = jsondata.get('pond_id')  # This is the ID to match
-            area = jsondata.get('area')
-            city = jsondata.get('city')
-            # telegram_group_id = jsondata.get('telegram_group_id')  # Uncomment if needed
+            register_intstance = User.objects.get(Mob=Mob)
+            if register_intstance:
+                xx = Pond(name=name, city=city, registration=register_intstance, area=area)
 
-            if not pond_id:
-                return JsonResponse({'message': 'Pond ID is required'}, status=400)
+                if polygon_points:
+                    points_str = ', '.join([f'{point[0]} {point[1]}' for point in polygon_points])
+                    points_str += f', {polygon_points[0][0]} {polygon_points[0][1]}'
+                    xx.location = f'POLYGON(({points_str}))'
+                else:
+                    xx.location = None 
+                
+                latitude_str = str(latitude)
+                longitude_str = str(longitude)
+                xx.latlong = f'({latitude_str},{longitude_str})'
+                xx.save()
 
-            # Fetch the Pond instance using the pond_id
-            try:
-                pond_instance = Pond.objects.get(id=pond_id)
-            except Pond.DoesNotExist:
-                return JsonResponse({'message': 'Pond not found for the given ID'}, status=404)
-
-            # Update the Pond instance
-            pond_instance.name = name
-            pond_instance.city = city
-            pond_instance.area = area
-
-            # Handle polygon points
-            if polygon_points:
-                points_str = ', '.join([f'{point[0]} {point[1]}' for point in polygon_points])
-                points_str += f', {polygon_points[0][0]} {polygon_points[0][1]}'  # Closing the polygon
-                pond_instance.location = f'POLYGON(({points_str}))'
-            else:
-                pond_instance.location = None
-
-            # Set latitude and longitude
-            latitude_str = str(latitude)
-            longitude_str = str(longitude)
-            pond_instance.latlong = f'({latitude_str},{longitude_str})'
-
-            # Save the updated Pond instance
-            pond_instance.save()
-
-            return JsonResponse({'message': 'Location updated successfully.'})
-
-        except ValueError as ve:
-            return JsonResponse({'message': 'Invalid data format', 'error': str(ve)}, status=400)
-
+                return JsonResponse({'message': 'Location saved successfully.'})
         except Exception as e:
-            return JsonResponse({'message': 'Location not updated', 'error': str(e)}, status=500)
-
-    return JsonResponse({'message': 'Method not allowed'}, status=405)
-
+            return JsonResponse({'message': 'Location not saved', 'error': str(e)})
 
 
 @csrf_exempt
@@ -491,13 +458,65 @@ def deleteuser(request,mob):
         #     return JsonResponse({"error": "admin mobile number not found"})
             
         try:
-            print("jhfjhgi")
             var = User.objects.get(Mob=mob)
             print(var)
             var.delete()
-            print("jijh")
             return JsonResponse({'message':'user delete successfull'})
         except:
             return JsonResponse({'message':'user Already deleted'})
     else:
         return JsonResponse({'message':'Invalid user'})
+    
+
+@csrf_exempt
+def photosend(request,id):
+    if request.method == 'GET':
+        try:
+            user = User.objects.get(Mob=id)
+            if user:
+                if user.avtar:
+                    responsedata = {
+                'photo': user.avtar.url,
+                }
+            return JsonResponse(responsedata)
+
+        except:
+            user = Admin.objects.get(Mob=id)
+            if user:
+                if user.avtar:
+                    responsedata = {
+                'photo': user.avtar.url,
+                }
+            return JsonResponse(responsedata)
+
+
+
+@csrf_exempt
+def photoupload(request, Mob):
+    if request.method == 'POST':
+        try:
+            user = User.objects.get(Mob=Mob)
+            if user:
+                
+                photo = request.FILES.get('photo')
+                if photo:
+                    user.avtar = photo
+                    user.save()
+                    return JsonResponse({'message': 'success'})
+                else:
+                    return JsonResponse({'message': 'No photo provided'}, status=400)
+        except:
+            user = Admin.objects.get(Mob=Mob)
+            if user:
+                
+                photo = request.FILES.get('photo')
+                if photo:
+                    user.avtar = photo
+                    user.save()
+                    return JsonResponse({'message': 'success'})
+                else:
+                    return JsonResponse({'message': 'No photo provided'}, status=400)
+        # except Exception as e:
+        #     return JsonResponse({'message': str(e)}, status=500)
+    else:
+        return JsonResponse({'message': 'Invalid request method'}, status=405)
