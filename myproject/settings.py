@@ -84,10 +84,10 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'waterdb1',
-        'USER': 'Bariflolabs',
-        'PASSWORD': 'Bfl@2024',
-        'HOST': 'aqua-postgres.postgres.database.azure.com',
+        'NAME': 'waterdb',
+        'USER': 'Vertoxlabs',
+        'PASSWORD': 'Vtx@2024',
+        'HOST': 'aqua.postgres.database.azure.com',
         'PORT': '5432',
     }
 }
